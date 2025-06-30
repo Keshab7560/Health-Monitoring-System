@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health.AI - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #0077b6, #00b4d8);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .dashboard-header i {
+            margin-right: 10px;
+            color: #ff6b6b;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-btn i {
+            margin-right: 5px;
+        }
+
+        .dashboard-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dashboard-title {
+            color: #0077b6;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .dashboard-description {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(to right, #0077b6, #00b4d8);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-btn i {
+            margin-right: 8px;
+        }
+
+        .dashboard-iframe-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #0077b6;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Download options modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            color: #0077b6;
+            font-size: 1.5rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .download-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .download-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .download-option:hover {
+            background-color: #f5f5f5;
+            border-color: #0077b6;
+        }
+
+        .download-option i {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            color: #0077b6;
+        }
+
+        .option-text h4 {
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .option-text p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .unsupported-note {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            font-style: italic;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 1rem;
+            }
+            
+            .dashboard-title {
+                font-size: 1.5rem;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.3rem;
+            }
+
+            .header-actions {
+                gap: 0.5rem;
+            }
+
+            .header-btn {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .header-btn span {
+                display: none;
+            }
+
+            .header-btn i {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>
+            <i class="fas fa-heartbeat"></i>
+            Health.AI Dashboard
+        </h1>
+        <div class="header-actions">
+            <button class="header-btn" id="downloadBtn">
+                <i class="fas fa-download"></i>
+                <span>Download</span>
+            </button>
+            <a href="index.html" class="header-btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <h2 class="dashboard-title">Healthcare Analytics Dashboard</h2>
+        <p class="dashboard-description">
+            This interactive dashboard provides visual insights into health data trends, patterns, and analytics. 
+            Explore the data to gain valuable insights for better decision-making in healthcare.
+        </p>
+        
+        <div class="dashboard-actions">
+            <button class="action-btn" id="fullscreenBtn">
+                <i class="fas fa-expand"></i> Fullscreen
+            </button>
+            <button class="action-btn" id="downloadBtn2">
+                <i class="fas fa-download"></i> Download Options
+            </button>
+        </div>
+        
+        <div class="dashboard-iframe-container">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Loading dashboard...</p>
+            </div>
+            <iframe 
+                class="dashboard-iframe" 
+                id="powerbiIframe" 
+                title="Healthcare" 
+                src="https://app.powerbi.com/view?r=eyJrIjoiZTZiNDBjYWQtODE5Zi00MzY1LWI5YjktYzgzMzA2NWFjYjBmIiwidCI6IjI0YzM4YzM0LWM4MmYtNDViNi05OTdlLWEzOGYzODUxOTgwYyJ9" 
+                frameborder="0" 
+                allowFullScreen="true">
+            </iframe>
+        </div>
+    </main>
+
+    <!-- Download Options Modal -->
+    <div class="modal" id="downloadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Download Options</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="download-options">
+                <a href="https://app.powerbi.com/view?r=eyJrIjoiZTZiNDBjYWQtODE5Zi00MzY1LWI5YjktYzgzMzA2NWFjYjBmIiwidCI6IjI0YzM4YzM0LWM4MmYtNDViNi05OTdlLWEzOGYzODUxOTgwYyJ9" 
+                   class="download-option" 
+                   target="_blank"
+                   onclick="trackDownload('powerbi_link')">
+                    <i class="fas fa-external-link-alt"></i>
+                    <div class="option-text">
+                        <h4>Open in Power BI</h4>
+                        <p>Access full export options in Power BI service</p>
+                    </div>
+                </a>
+                
+                <div class="download-option" onclick="showScreenshotInstructions()">
+                    <i class="fas fa-camera"></i>
+                    <div class="option-text">
+                        <h4>Take Screenshot</h4>
+                        <p>Capture the current view as an image</p>
+                    </div>
+                </div>
+                
+                <div class="download-option" onclick="showExportInstructions()">
+                    <i class="fas fa-file-export"></i>
+                    <div class="option-text">
+                        <h4>Export Instructions</h4>
+                        <p>Step-by-step guide to export data</p>
+                    </div>
+                </div>
+            </div>
+            <p class="unsupported-note">
+                Note: Full export functionality requires Power BI access. Screenshot is always available.
+            </p>
+        </div>
+    </div>
+
+    <!-- Screenshot Instructions Modal -->
+    <div class="modal" id="screenshotModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Screenshot Instructions</h3>
+                <button class="close-modal" onclick="closeScreenshotModal()">&times;</button>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin-bottom: 0.5rem; color: #0077b6;">Windows:</h4>
+                <ol style="padding-left: 1.5rem; color: #666;">
+                    <li>Press <strong>PrtScn</strong> (Print Screen) key</li>
+                    <li>Open Paint or other image editor</li>
+                    <li>Paste with <strong>Ctrl+V</strong></li>
+                    <li>Save as PNG or JPG</li>
+                </ol>
+                
+                <h4 style="margin: 1rem 0 0.5rem; color: #0077b6;">Mac:</h4>
+                <ol style="padding-left: 1.5rem; color: #666;">
+                    <li>Press <strong>Command+Shift+4</strong></li>
+                    <li>Select the dashboard area</li>
+                    <li>Find screenshot on your Desktop</li>
+                </ol>
+            </div>
+            <button class="action-btn" style="width: 100%;" onclick="closeScreenshotModal()">
+                <i class="fas fa-check"></i> Got It!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Hide loading spinner when iframe is loaded
+        document.getElementById('powerbiIframe').onload = function() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+        };
+
+        // Fullscreen functionality
+        document.getElementById('fullscreenBtn').addEventListener('click', function() {
+            const iframe = document.getElementById('powerbiIframe');
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.webkitRequestFullscreen) {
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) {
+                iframe.msRequestFullscreen();
+            }
+        });
+
+        // Back button functionality
+        document.getElementById('backBtn').addEventListener('click', function(e) {
+            // If there's history, go back
+            if (window.history.length > 1) {
+                window.history.back();
+                e.preventDefault(); // Only prevent default if we're using history
+            }
+            // Otherwise, the default link behavior will take them to index.html
+        });
+
+        // Download modal functionality
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadBtn2 = document.getElementById('downloadBtn2');
+        const downloadModal = document.getElementById('downloadModal');
+        const screenshotModal = document.getElementById('screenshotModal');
+
+        function showModal() {
+            downloadModal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            downloadModal.style.display = 'none';
+        }
+
+        function showScreenshotInstructions() {
+            closeModal();
+            screenshotModal.style.display = 'flex';
+        }
+
+        function closeScreenshotModal() {
+            screenshotModal.style.display = 'none';
+        }
+
+        function showExportInstructions() {
+            closeModal();
+            alert("To export data from Power BI:\n\n1. Open the dashboard in Power BI (use the first option)\n2. Click 'File' in the top menu\n3. Select 'Export'\n4. Choose your preferred format (PDF, PPTX, etc.)\n5. Follow the on-screen instructions");
+        }
+
+        function trackDownload(type) {
+            // In a real implementation, you would track this download
+            console.log('Download initiated:', type);
+        }
+
+        downloadBtn.addEventListener('click', showModal);
+        downloadBtn2.addEventListener('click', showModal);
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === downloadModal) {
+                closeModal();
+            }
+            if (event.target === screenshotModal) {
+                closeScreenshotModal();
+            }
+        });
+    </script>
+</body>
+</html>
