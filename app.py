@@ -35,7 +35,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-    is_active = db.Column(db.Boolean, default=True)  # Added for ban functionality
+    is_active = db.Column(db.Boolean, default=True)
     join_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -135,11 +135,9 @@ def make_session_permanent():
 @app.route('/')
 def index():
     """Renders the main landing page."""
-    # Check for redirect parameter after login
     if 'user_id' in session and request.args.get('redirect') == 'dashboard':
         return redirect(url_for('dashboard'))
     
-    # Check for login error
     login_error = request.args.get('login_error')
     return render_template('index.html', login_error=login_error)
 
@@ -209,13 +207,10 @@ def login():
             session['is_admin'] = user.is_admin
             session.modified = True
             
-            # Redirect to next page or index
             return redirect(next_page)
         
-        # If login fails, redirect to index with error
         return redirect(url_for('index', login_error="Invalid email or password"))
     
-    # If GET request, redirect to index
     return redirect(url_for('index'))
 
 @app.route('/signup', methods=['POST'])
@@ -235,7 +230,6 @@ def signup():
         if len(password) < 6:
             return redirect(url_for('index', signup_error="Password must be at least 6 characters"))
         
-        # Create new user with hashed password
         new_user = User(
             name=name,
             email=email,
@@ -247,14 +241,12 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
         
-        # Create session for new user
         session.clear()
         session['user_id'] = new_user.id
         session['user_name'] = new_user.name
         session['is_admin'] = False
         session.modified = True
         
-        # Redirect to index after signup
         return redirect(url_for('index'))
     
     return redirect(url_for('index'))
@@ -278,7 +270,6 @@ def check_session():
             })
     return jsonify({'logged_in': False})
 
-# Password reset routes
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     """Handles the 'forgot password' request, sending a reset email."""
@@ -287,10 +278,8 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
         
         if user:
-            # Delete any existing tokens for this user
             PasswordResetToken.query.filter_by(user_id=user.id).delete()
             
-            # Create new token
             token = secrets.token_urlsafe(32)
             expiration = datetime.utcnow() + timedelta(hours=1)
             
@@ -303,14 +292,12 @@ def forgot_password():
             db.session.add(reset_token)
             db.session.commit()
             
-            # Send email
             reset_url = url_for('reset_password', token=token, _external=True)
             if send_reset_email(user, reset_url):
                 return render_template('forgot_password.html', success=True)
             else:
                 return render_template('forgot_password.html', error="Failed to send email. Please try again later.")
         
-        # Generic message for security
         return render_template('forgot_password.html', error="If an account with that email exists, a password reset link has been sent.")
     
     return render_template('forgot_password.html')
@@ -342,7 +329,6 @@ def reset_password(token):
 
         user.password = generate_password_hash(password, method='pbkdf2:sha256')
         
-        # Delete the token after successful reset
         db.session.delete(reset_token)
         db.session.commit()
         
@@ -350,7 +336,6 @@ def reset_password(token):
     
     return render_template('reset_password.html', token=token)
 
-# Admin user management routes
 @app.route('/admin/toggle_user_status/<int:user_id>', methods=['POST'])
 def toggle_user_status(user_id):
     """Toggles user active status (ban/unban)."""
@@ -451,14 +436,148 @@ def delete_user(user_id):
 
 @app.route('/api/chat', methods=['POST'])
 def chat_api():
-    """Placeholder for a chatbot API endpoint."""
+    """Enhanced Health.AI chatbot with disease, symptoms, and risk analysis information."""
     data = request.get_json()
-    user_message = data.get('message', '')
+    user_message = data.get('message', '').lower()
     
-    # Simple echo response for demonstration
-    bot_response = f"You said: '{user_message}'. I am a placeholder chatbot."
+    # Disease database with symptoms and risk factors
+    disease_db = {
+        'diabetes': {
+            'symptoms': ['frequent urination', 'excessive thirst', 'hunger', 'fatigue', 'blurred vision'],
+            'risk_factors': ['family history', 'overweight', 'high blood pressure', 'physical inactivity'],
+            'prevention': ['maintain healthy weight', 'regular exercise', 'balanced diet', 'regular checkups'],
+            'description': "A chronic condition that affects how your body turns food into energy."
+        },
+        'hypertension': {
+            'symptoms': ['headaches', 'shortness of breath', 'nosebleeds', 'dizziness'],
+            'risk_factors': ['age', 'family history', 'obesity', 'high salt diet', 'stress'],
+            'prevention': ['reduce salt intake', 'regular exercise', 'limit alcohol', 'manage stress'],
+            'description': "High blood pressure that can lead to serious health complications."
+        },
+        'heart disease': {
+            'symptoms': ['chest pain', 'shortness of breath', 'pain in arms/neck/jaw', 'fatigue'],
+            'risk_factors': ['high blood pressure', 'high cholesterol', 'smoking', 'diabetes', 'obesity'],
+            'prevention': ['healthy diet', 'regular exercise', 'no smoking', 'manage stress'],
+            'description': "A range of conditions that affect your heart's structure and function."
+        }
+    }
     
-    return jsonify({'response': bot_response})
+    # Service information
+    services_info = {
+        'risk analysis': {
+            'description': "Our AI analyzes your health data to identify potential risks.",
+            'process': "Upload your health records or connect wearable devices for analysis.",
+            'benefits': "Early detection of health issues, personalized recommendations",
+            'how_to_use': "Login and upload your health data to get started."
+        },
+        'disease prediction': {
+            'description': "Predicts potential health issues based on your metrics.",
+            'process': "Our models analyze patterns in your health data over time.",
+            'benefits': "Proactive healthcare, prevention-focused approach",
+            'how_to_use': "Provide your health history and current metrics for analysis."
+        },
+        'patient segmentation': {
+            'description': "Groups patients with similar characteristics.",
+            'process': "Cluster analysis of demographic and health metrics.",
+            'benefits': "Personalized treatment plans, efficient resource allocation",
+            'how_to_use': "Available to healthcare providers for population health management."
+        },
+        'data visualization': {
+            'description': "Interactive dashboards for health data insights.",
+            'process': "Connect your health data sources to visualize trends.",
+            'benefits': "Better understanding of health patterns, data-driven decisions",
+            'how_to_use': "Access through our dashboard after login."
+        }
+    }
+
+    # Generate response based on user input
+    if any(word in user_message for word in ['hello', 'hi', 'hey']):
+        response = "Hello! I'm your Health.AI assistant. I can help with:\n- Disease information\n- Symptoms analysis\n- Risk assessment\n- Our services\nHow can I help you today?"
+    
+    # Disease information
+    elif 'disease' in user_message or any(d in user_message for d in disease_db.keys()):
+        disease = next((d for d in disease_db.keys() if d in user_message), None)
+        if disease:
+            info = disease_db[disease]
+            response = f"""**{disease.title()} Information**:
+📝 Description: {info['description']}
+🩺 Symptoms: {', '.join(info['symptoms'])}
+⚠️ Risk Factors: {', '.join(info['risk_factors'])}
+🛡️ Prevention: {', '.join(info['prevention'])}"""
+        else:
+            response = "I can provide information about:\n- " + "\n- ".join(disease_db.keys()) + "\nWhich disease would you like to know about?"
+    
+    # Symptoms analysis
+    elif 'symptom' in user_message or any(s in user_message for d in disease_db.values() for s in d['symptoms']):
+        symptom = next((s for d in disease_db.values() for s in d['symptoms'] if s in user_message), None)
+        if symptom:
+            related_diseases = [d for d, info in disease_db.items() if symptom in info['symptoms']]
+            response = f"🔍 Symptom '{symptom}' may be associated with:\n- " + "\n- ".join(related_diseases) + "\n\nPlease consult a doctor for proper diagnosis."
+        else:
+            response = "Please describe your symptoms for analysis. I can help with symptoms related to:\n- " + "\n- ".join(disease_db.keys())
+    
+    # Risk analysis
+    elif 'risk' in user_message or any(f in user_message for d in disease_db.values() for f in d['risk_factors']):
+        factor = next((f for d in disease_db.values() for f in d['risk_factors'] if f in user_message), None)
+        if factor:
+            related_diseases = [d for d, info in disease_db.items() if factor in info['risk_factors']]
+            prevention_tips = set()
+            for d in related_diseases:
+                prevention_tips.update(disease_db[d]['prevention'])
+            
+            response = f"""⚠️ Risk factor '{factor}' is associated with:
+- """ + "\n- ".join(related_diseases) + f"""
+
+💡 Prevention tips:
+- """ + "\n- ".join(prevention_tips) + """
+  
+Our Risk Analysis service can provide personalized recommendations."""
+        else:
+            response = """Our Risk Analysis service evaluates:
+- Family history
+- Lifestyle factors
+- Current health metrics
+
+Common risk factors I can discuss:
+- """ + "\n- ".join(set(f for d in disease_db.values() for f in d['risk_factors'])) + """
+
+Would you like to know about a specific risk factor?"""
+    
+    # Service information
+    elif any(word in user_message for word in ['service', 'feature', 'function']):
+        service = next((s for s in services_info.keys() if s in user_message), None)
+        if service:
+            info = services_info[service]
+            response = f"""**{service.title()} Service**:
+📝 Description: {info['description']}
+🔄 Process: {info['process']}
+✅ Benefits: {info['benefits']}
+🔧 How to Use: {info['how_to_use']}"""
+        else:
+            response = "Our services include:\n- " + "\n- ".join(services_info.keys()) + "\nWhich service would you like details about?"
+    
+    # Contact information
+    elif any(word in user_message for word in ['contact', 'email', 'phone']):
+        response = """📞 Contact Health.AI:
+Phone: +91 8144138550
+Email: keshabsasmal204@gmail.com
+Location: Chandaka, Bhubaneswar, India"""
+    
+    # Help section
+    elif any(word in user_message for word in ['help', 'support']):
+        response = """🆘 I can help with:
+1. Disease Information (symptoms, risk factors)
+2. Health Risk Analysis
+3. Service Details (Risk Analysis, Disease Prediction, etc.)
+4. Contact Information
+
+What would you like to know?"""
+    
+    # Default response
+    else:
+        response = "I'm trained to discuss health topics. You can ask about:\n- Specific diseases\n- Symptoms\n- Risk factors\n- Our services\n\nHow can I assist you?"
+
+    return jsonify({'response': response})
 
 if __name__ == '__main__':
     app.run(debug=True)
