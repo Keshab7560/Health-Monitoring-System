@@ -260,20 +260,21 @@
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
+            padding: 0.5rem;
         }
 
-        /* Mobile Menu Styles */
+        /* Mobile Menu Styles - Fixed the mobile menu positioning */
         .mobile-menu {
             display: none;
             position: fixed;
-            top: 60px;
+            top: 70px; /* Adjusted to account for header height */
             left: 0;
             width: 100%;
             background: var(--header-bg);
             z-index: 999;
             padding: 1rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transform: translateY(-100%);
+            transform: translateY(-150%);
             opacity: 0;
             transition: all 0.3s ease;
         }
@@ -281,6 +282,7 @@
         .mobile-menu.active {
             transform: translateY(0);
             opacity: 1;
+            display: block;
         }
 
         .mobile-menu ul {
@@ -1571,461 +1573,506 @@
         </div>
     </div>
 
-    <script>
-        // User session management
-        let currentUser = null;
-        let isAdmin = false;
+ <script>
+    // User session management
+    let currentUser = null;
+    let isAdmin = false;
 
-        // DOM Elements
-        const loginBtn = document.getElementById('loginBtn');
-        const signupBtn = document.getElementById('signupBtn');
-        const adminBtn = document.getElementById('adminBtn');
-        const userWelcome = document.getElementById('userWelcome');
-        const usernameDisplay = document.getElementById('usernameDisplay');
-        const authButtons = document.getElementById('authButtons');
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        const mobileLoginBtn = document.getElementById('mobileLoginBtn');
-        const mobileSignupBtn = document.getElementById('mobileSignupBtn');
-        const mobileAdminBtn = document.getElementById('mobileAdminBtn');
-        const mobileUserWelcome = document.getElementById('mobileUserWelcome');
-        const mobileUsernameDisplay = document.getElementById('mobileUsernameDisplay');
-        const mobileAuthButtons = document.getElementById('mobileAuthButtons');
+    // DOM Elements
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const adminBtn = document.getElementById('adminBtn');
+    const userWelcome = document.getElementById('userWelcome');
+    const usernameDisplay = document.getElementById('usernameDisplay');
+    const authButtons = document.getElementById('authButtons');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+    const mobileSignupBtn = document.getElementById('mobileSignupBtn');
+    const mobileAdminBtn = document.getElementById('mobileAdminBtn');
+    const mobileUserWelcome = document.getElementById('mobileUserWelcome');
+    const mobileUsernameDisplay = document.getElementById('mobileUsernameDisplay');
+    const mobileAuthButtons = document.getElementById('mobileAuthButtons');
+    const mobileDarkModeToggle = document.getElementById('mobileDarkModeToggle');
+    const mobileSimpleModeToggle = document.getElementById('mobileSimpleModeToggle');
 
-        // Modal elements
-        const loginModal = document.getElementById('loginModal');
-        const signupModal = document.getElementById('signupModal');
-        const adminModal = document.getElementById('adminModal');
-        const closeLogin = document.getElementById('closeLogin');
-        const closeSignup = document.getElementById('closeSignup');
-        const closeAdmin = document.getElementById('closeAdmin');
-        const showSignup = document.getElementById('showSignup');
-        const showLogin = document.getElementById('showLogin');
+    // Modal elements
+    const loginModal = document.getElementById('loginModal');
+    const signupModal = document.getElementById('signupModal');
+    const adminModal = document.getElementById('adminModal');
+    const closeLogin = document.getElementById('closeLogin');
+    const closeSignup = document.getElementById('closeSignup');
+    const closeAdmin = document.getElementById('closeAdmin');
+    const showSignup = document.getElementById('showSignup');
+    const showLogin = document.getElementById('showLogin');
 
-        // Service elements
-        const loginService1 = document.getElementById('loginService1');
-        const loginService2 = document.getElementById('loginService2');
-        const loginService3 = document.getElementById('loginService3');
-        const loginService4 = document.getElementById('loginService4');
+    // Service elements
+    const loginService1 = document.getElementById('loginService1');
+    const loginService2 = document.getElementById('loginService2');
+    const loginService3 = document.getElementById('loginService3');
+    const loginService4 = document.getElementById('loginService4');
 
-        // Chatbot elements
-        const chatbotBtn = document.getElementById('chatbotBtn');
-        const chatbotContainer = document.getElementById('chatbotContainer');
-        const closeChatbot = document.getElementById('closeChatbot');
-        const chatbotMessages = document.getElementById('chatbotMessages');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('sendBtn');
+    // Chatbot elements
+    const chatbotBtn = document.getElementById('chatbotBtn');
+    const chatbotContainer = document.getElementById('chatbotContainer');
+    const closeChatbot = document.getElementById('closeChatbot');
+    const chatbotMessages = document.getElementById('chatbotMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
 
-        // Theme toggles
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const simpleModeToggle = document.getElementById('simpleModeToggle');
-        const body = document.body;
+    // Theme toggles
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const simpleModeToggle = document.getElementById('simpleModeToggle');
+    const body = document.body;
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            checkSessionStatus();
-            setupEventListeners();
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function() {
+        checkSessionStatus();
+        setupEventListeners();
+        updateUI();
+        initTheme();
+    });
+
+    // Check session status with server
+    async function checkSessionStatus() {
+        try {
+            const response = await fetch('/check_session');
+            const data = await response.json();
+            
+            if (data.logged_in) {
+                currentUser = {
+                    name: data.name,
+                    isAdmin: data.is_admin
+                };
+                isAdmin = data.is_admin;
+            } else {
+                currentUser = null;
+                isAdmin = false;
+            }
+            
             updateUI();
-            initTheme();
-        });
-
-        // Check session status with server
-        async function checkSessionStatus() {
-            try {
-                const response = await fetch('/check_session');
-                const data = await response.json();
-                
-                if (data.logged_in) {
-                    currentUser = {
-                        name: data.name,
-                        isAdmin: data.is_admin
-                    };
-                    isAdmin = data.is_admin;
-                } else {
-                    currentUser = null;
-                    isAdmin = false;
-                }
-                
-                updateUI();
-            } catch (error) {
-                console.error('Session check error:', error);
-            }
+        } catch (error) {
+            console.error('Session check error:', error);
         }
+    }
 
-        // Setup all event listeners
-        function setupEventListeners() {
-            // Modal controls
-            loginBtn.addEventListener('click', () => showModal(loginModal));
-            signupBtn.addEventListener('click', () => showModal(signupModal));
-            adminBtn.addEventListener('click', () => showModal(adminModal));
-            
-            mobileLoginBtn.addEventListener('click', () => showModal(loginModal));
-            mobileSignupBtn.addEventListener('click', () => showModal(signupModal));
-            mobileAdminBtn.addEventListener('click', () => showModal(adminModal));
-            
-            closeLogin.addEventListener('click', () => closeModal(loginModal));
-            closeSignup.addEventListener('click', () => closeModal(signupModal));
-            closeAdmin.addEventListener('click', () => closeModal(adminModal));
-            
-            showSignup.addEventListener('click', () => {
-                closeModal(loginModal);
-                showModal(signupModal);
-            });
-            
-            showLogin.addEventListener('click', () => {
-                closeModal(signupModal);
-                showModal(loginModal);
-            });
-            
-            // Service login prompts
-            loginService1.addEventListener('click', () => showModal(loginModal));
-            loginService2.addEventListener('click', () => showModal(loginModal));
-            loginService3.addEventListener('click', () => showModal(loginModal));
-            loginService4.addEventListener('click', () => showModal(loginModal));
-            
-            // Mobile menu
-            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-            
-            // Close modals when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === loginModal) closeModal(loginModal);
-                if (e.target === signupModal) closeModal(signupModal);
-                if (e.target === adminModal) closeModal(adminModal);
-            });
-            
-            // Chatbot controls
-            chatbotBtn.addEventListener('click', toggleChatbot);
-            closeChatbot.addEventListener('click', () => chatbotContainer.classList.remove('active'));
-            sendBtn.addEventListener('click', handleUserInput);
-            userInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') handleUserInput();
-            });
-            
-            // Theme toggles
-            darkModeToggle.addEventListener('click', toggleDarkMode);
-            simpleModeToggle.addEventListener('click', toggleSimpleMode);
-            
-            // Smooth scrolling for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                    mobileMenu.classList.remove('active');
-                });
-            });
-        }
-
-        // Update UI based on login state
-        function updateUI() {
-            if (currentUser) {
-                // Desktop view
-                userWelcome.style.display = 'flex';
-                usernameDisplay.textContent = currentUser.name;
-                authButtons.style.display = 'none';
-                adminBtn.style.display = isAdmin ? 'block' : 'none';
-                
-                // Mobile view
-                mobileUserWelcome.style.display = 'flex';
-                mobileUsernameDisplay.textContent = currentUser.name;
-                mobileAuthButtons.style.display = 'none';
-                mobileAdminBtn.style.display = isAdmin ? 'block' : 'none';
-                
-                // Show service links and hide login prompts
-                document.querySelectorAll('.login-prompt').forEach(el => {
-                    el.style.display = 'none';
-                });
-                document.querySelectorAll('.service-link').forEach(el => {
-                    el.style.display = 'inline-block';
-                });
-            } else {
-                // Desktop view
-                userWelcome.style.display = 'none';
-                authButtons.style.display = 'flex';
-                adminBtn.style.display = 'none';
-                
-                // Mobile view
-                mobileUserWelcome.style.display = 'none';
-                mobileAuthButtons.style.display = 'flex';
-                mobileAdminBtn.style.display = 'none';
-                
-                // Show login prompts and hide service links
-                document.querySelectorAll('.login-prompt').forEach(el => {
-                    el.style.display = 'flex';
-                });
-                document.querySelectorAll('.service-link').forEach(el => {
-                    el.style.display = 'none';
-                });
-            }
-        }
-
+    // Setup all event listeners
+    function setupEventListeners() {
         // Modal controls
-        function showModal(modal) {
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            mobileMenu.classList.remove('active');
-            clearErrors();
-        }
-
-        function closeModal(modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
-        function clearErrors() {
-            document.querySelectorAll('.error-message').forEach(error => {
-                error.textContent = '';
-                error.style.display = 'none';
-            });
-        }
-
-        function showError(elementId, message) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.style.display = 'block';
-        }
-
-        // Mobile menu controls
-        function toggleMobileMenu() {
+        loginBtn.addEventListener('click', () => showModal(loginModal));
+        signupBtn.addEventListener('click', () => showModal(signupModal));
+        adminBtn.addEventListener('click', () => showModal(adminModal));
+        
+        mobileLoginBtn.addEventListener('click', () => showModal(loginModal));
+        mobileSignupBtn.addEventListener('click', () => showModal(signupModal));
+        mobileAdminBtn.addEventListener('click', () => showModal(adminModal));
+        
+        closeLogin.addEventListener('click', () => closeModal(loginModal));
+        closeSignup.addEventListener('click', () => closeModal(signupModal));
+        closeAdmin.addEventListener('click', () => closeModal(adminModal));
+        
+        showSignup.addEventListener('click', () => {
+            closeModal(loginModal);
+            showModal(signupModal);
+        });
+        
+        showLogin.addEventListener('click', () => {
+            closeModal(signupModal);
+            showModal(loginModal);
+        });
+        
+        // Service login prompts
+        loginService1.addEventListener('click', () => showModal(loginModal));
+        loginService2.addEventListener('click', () => showModal(loginModal));
+        loginService3.addEventListener('click', () => showModal(loginModal));
+        loginService4.addEventListener('click', () => showModal(loginModal));
+        
+        // Mobile menu
+        mobileMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
             mobileMenu.classList.toggle('active');
-        }
-
-        // Chatbot functionality
-        function toggleChatbot() {
-            chatbotContainer.classList.toggle('active');
-            mobileMenu.classList.remove('active');
-        }
-
-        function addMessage(text, isUser) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message');
-            messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
-            messageDiv.textContent = text;
-            chatbotMessages.appendChild(messageDiv);
-            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-        }
-
-        function showTyping() {
-            const typingDiv = document.createElement('div');
-            typingDiv.classList.add('typing-indicator');
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerHTML = `
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            `;
-            chatbotMessages.appendChild(typingDiv);
-            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-        }
-
-        function hideTyping() {
-            const typingIndicator = document.getElementById('typingIndicator');
-            if (typingIndicator) typingIndicator.remove();
-        }
-
-        async function handleUserInput() {
-            const text = userInput.value.trim();
-            if (text === '') return;
-            
-            addMessage(text, true);
-            userInput.value = '';
-            
-            showTyping();
-            
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: text })
-                });
-                
-                const data = await response.json();
-                hideTyping();
-                addMessage(data.response, false);
-            } catch (error) {
-                hideTyping();
-                addMessage("I'm sorry, I'm having trouble connecting right now. Please try again later.", false);
-                console.error('Error:', error);
-            }
-        }
-
-        // Password toggle functionality
-        function togglePassword(inputId) {
-            const input = document.getElementById(inputId);
-            const icon = input.nextElementSibling;
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-
-        // Password validation
-        function validatePassword(password) {
-            const errors = [];
-            if (password.length < 8) {
-                errors.push("Password must be at least 8 characters long");
-            }
-            if (!/[A-Z]/.test(password)) {
-                errors.push("Password must contain at least one uppercase letter");
-            }
-            if (!/[a-z]/.test(password)) {
-                errors.push("Password must contain at least one lowercase letter");
-            }
-            if (!/[0-9]/.test(password)) {
-                errors.push("Password must contain at least one number");
-            }
-            if (!/[@$!%*?&]/.test(password)) {
-                errors.push("Password must contain at least one special character (@$!%*?&)");
-            }
-            return errors;
-        }
-
-        // Update the signup form submission to validate password
-        document.querySelector('#signupModal form').addEventListener('submit', function(e) {
-            const password = document.getElementById('signupPassword').value;
-            const confirm = document.getElementById('signupConfirm').value;
-            const passwordError = document.getElementById('signupPasswordError');
-            const confirmError = document.getElementById('signupConfirmError');
-            
-            // Clear previous errors
-            passwordError.textContent = '';
-            passwordError.style.display = 'none';
-            confirmError.textContent = '';
-            confirmError.style.display = 'none';
-            
-            // Validate password
-            const passwordErrors = validatePassword(password);
-            if (passwordErrors.length > 0) {
-                e.preventDefault();
-                passwordError.textContent = passwordErrors.join(', ');
-                passwordError.style.display = 'block';
-                return;
-            }
-            
-            // Check password match
-            if (password !== confirm) {
-                e.preventDefault();
-                confirmError.textContent = "Passwords don't match";
-                confirmError.style.display = 'block';
+        });
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!mobileMenu.contains(e.target) && e.target !== mobileMenuBtn) {
+                mobileMenu.classList.remove('active');
             }
         });
-
-        // Theme management
-        function initTheme() {
-            if (localStorage.getItem('darkMode') === 'enabled') {
-                body.setAttribute('data-theme', 'dark');
-                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            }
-
-            if (localStorage.getItem('simpleMode') === 'enabled') {
-                body.setAttribute('data-mode', 'simple');
-                simpleModeToggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            }
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === loginModal) closeModal(loginModal);
+            if (e.target === signupModal) closeModal(signupModal);
+            if (e.target === adminModal) closeModal(adminModal);
+        });
+        
+        // Chatbot controls
+        chatbotBtn.addEventListener('click', toggleChatbot);
+        closeChatbot.addEventListener('click', () => chatbotContainer.classList.remove('active'));
+        sendBtn.addEventListener('click', handleUserInput);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleUserInput();
+        });
+        
+        // Theme toggles
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+        simpleModeToggle.addEventListener('click', toggleSimpleMode);
+        
+        // Mobile theme toggles
+        if (mobileDarkModeToggle) {
+            mobileDarkModeToggle.addEventListener('click', toggleDarkMode);
         }
-
-        function toggleDarkMode() {
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.removeAttribute('data-theme');
-                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                localStorage.setItem('darkMode', 'disabled');
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                localStorage.setItem('darkMode', 'enabled');
-            }
+        if (mobileSimpleModeToggle) {
+            mobileSimpleModeToggle.addEventListener('click', toggleSimpleMode);
         }
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                mobileMenu.classList.remove('active');
+            });
+        });
+    }
 
-        function toggleSimpleMode() {
-            if (body.getAttribute('data-mode') === 'simple') {
-                body.removeAttribute('data-mode');
-                simpleModeToggle.innerHTML = '<i class="fas fa-eye"></i>';
-                localStorage.setItem('simpleMode', 'disabled');
-            } else {
-                body.setAttribute('data-mode', 'simple');
-                simpleModeToggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
-                localStorage.setItem('simpleMode', 'enabled');
-            }
-        }
-
-        // Statistics counter animation
-        function animateStats() {
-            const statNumbers = document.querySelectorAll('.stat-number');
+    // Update UI based on login state
+    function updateUI() {
+        if (currentUser) {
+            // Desktop view
+            userWelcome.style.display = 'flex';
+            usernameDisplay.textContent = currentUser.name;
+            authButtons.style.display = 'none';
+            adminBtn.style.display = isAdmin ? 'block' : 'none';
             
-            statNumbers.forEach(stat => {
-                const target = +stat.getAttribute('data-target');
-                const increment = target / 100;
-                let current = 0;
-                
-                const timer = setInterval(() => {
-                    current += increment;
-                    stat.textContent = Math.floor(current);
-                    
-                    if (current >= target) {
-                        stat.textContent = target;
-                        clearInterval(timer);
-                    }
-                }, 20);
+            // Mobile view
+            mobileUserWelcome.style.display = 'flex';
+            mobileUsernameDisplay.textContent = currentUser.name;
+            mobileAuthButtons.style.display = 'none';
+            mobileAdminBtn.style.display = isAdmin ? 'block' : 'none';
+            
+            // Show service links and hide login prompts
+            document.querySelectorAll('.login-prompt').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.service-link').forEach(el => {
+                el.style.display = 'inline-block';
+            });
+        } else {
+            // Desktop view
+            userWelcome.style.display = 'none';
+            authButtons.style.display = 'flex';
+            adminBtn.style.display = 'none';
+            
+            // Mobile view
+            mobileUserWelcome.style.display = 'none';
+            mobileAuthButtons.style.display = 'flex';
+            mobileAdminBtn.style.display = 'none';
+            
+            // Show login prompts and hide service links
+            document.querySelectorAll('.login-prompt').forEach(el => {
+                el.style.display = 'flex';
+            });
+            document.querySelectorAll('.service-link').forEach(el => {
+                el.style.display = 'none';
             });
         }
+    }
 
-        // Run the animation when the stats section comes into view
-        const statsSection = document.querySelector('.stats');
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) {
-                animateStats();
-                observer.unobserve(statsSection);
-            }
-        }, { threshold: 0.5 });
+    // Modal controls
+    function showModal(modal) {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        mobileMenu.classList.remove('active');
+        clearErrors();
+    }
 
-        observer.observe(statsSection);
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
 
-        // Add logout buttons
-        const logoutBtn = document.createElement('button');
-        logoutBtn.textContent = 'Logout';
-        logoutBtn.classList.add('auth-btn', 'login');
-        logoutBtn.style.marginLeft = '10px';
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                const response = await fetch('/logout');
-                if (response.ok) {
-                    currentUser = null;
-                    isAdmin = false;
-                    updateUI();
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
+    function clearErrors() {
+        document.querySelectorAll('.error-message').forEach(error => {
+            error.textContent = '';
+            error.style.display = 'none';
         });
-        userWelcome.appendChild(logoutBtn);
+    }
 
-        const mobileLogoutBtn = document.createElement('button');
-        mobileLogoutBtn.textContent = 'Logout';
-        mobileLogoutBtn.classList.add('auth-btn', 'login');
-        mobileLogoutBtn.style.marginLeft = '10px';
-        mobileLogoutBtn.addEventListener('click', async () => {
-            try {
-                const response = await fetch('/logout');
-                if (response.ok) {
-                    currentUser = null;
-                    isAdmin = false;
-                    updateUI();
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error('Logout error:', error);
+    function showError(elementId, message) {
+        const element = document.getElementById(elementId);
+        element.textContent = message;
+        element.style.display = 'block';
+    }
+
+    // Chatbot functionality
+    function toggleChatbot() {
+        chatbotContainer.classList.toggle('active');
+        mobileMenu.classList.remove('active');
+    }
+
+    function addMessage(text, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+        messageDiv.textContent = text;
+        chatbotMessages.appendChild(messageDiv);
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    function showTyping() {
+        const typingDiv = document.createElement('div');
+        typingDiv.classList.add('typing-indicator');
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = `
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        `;
+        chatbotMessages.appendChild(typingDiv);
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    function hideTyping() {
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) typingIndicator.remove();
+    }
+
+    async function handleUserInput() {
+        const text = userInput.value.trim();
+        if (text === '') return;
+        
+        addMessage(text, true);
+        userInput.value = '';
+        
+        showTyping();
+        
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: text })
+            });
+            
+            const data = await response.json();
+            hideTyping();
+            addMessage(data.response, false);
+        } catch (error) {
+            hideTyping();
+            addMessage("I'm sorry, I'm having trouble connecting right now. Please try again later.", false);
+            console.error('Error:', error);
+        }
+    }
+
+    // Password toggle functionality
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.nextElementSibling;
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // Password validation
+    function validatePassword(password) {
+        const errors = [];
+        if (password.length < 8) {
+            errors.push("Password must be at least 8 characters long");
+        }
+        if (!/[A-Z]/.test(password)) {
+            errors.push("Password must contain at least one uppercase letter");
+        }
+        if (!/[a-z]/.test(password)) {
+            errors.push("Password must contain at least one lowercase letter");
+        }
+        if (!/[0-9]/.test(password)) {
+            errors.push("Password must contain at least one number");
+        }
+        if (!/[@$!%*?&]/.test(password)) {
+            errors.push("Password must contain at least one special character (@$!%*?&)");
+        }
+        return errors;
+    }
+
+    // Update the signup form submission to validate password
+    document.querySelector('#signupModal form').addEventListener('submit', function(e) {
+        const password = document.getElementById('signupPassword').value;
+        const confirm = document.getElementById('signupConfirm').value;
+        const passwordError = document.getElementById('signupPasswordError');
+        const confirmError = document.getElementById('signupConfirmError');
+        
+        // Clear previous errors
+        passwordError.textContent = '';
+        passwordError.style.display = 'none';
+        confirmError.textContent = '';
+        confirmError.style.display = 'none';
+        
+        // Validate password
+        const passwordErrors = validatePassword(password);
+        if (passwordErrors.length > 0) {
+            e.preventDefault();
+            passwordError.textContent = passwordErrors.join(', ');
+            passwordError.style.display = 'block';
+            return;
+        }
+        
+        // Check password match
+        if (password !== confirm) {
+            e.preventDefault();
+            confirmError.textContent = "Passwords don't match";
+            confirmError.style.display = 'block';
+        }
+    });
+
+    // Theme management
+    function initTheme() {
+        // Dark mode initialization
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            body.setAttribute('data-theme', 'dark');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileDarkModeToggle) {
+                mobileDarkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
             }
+        } else {
+            darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileDarkModeToggle) {
+                mobileDarkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        }
+
+        // Simple mode initialization
+        if (localStorage.getItem('simpleMode') === 'enabled') {
+            body.setAttribute('data-mode', 'simple');
+            simpleModeToggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            if (mobileSimpleModeToggle) {
+                mobileSimpleModeToggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            }
+        } else {
+            simpleModeToggle.innerHTML = '<i class="fas fa-eye"></i>';
+            if (mobileSimpleModeToggle) {
+                mobileSimpleModeToggle.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        }
+    }
+
+    function toggleDarkMode() {
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileDarkModeToggle) {
+                mobileDarkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            localStorage.setItem('darkMode', 'disabled');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileDarkModeToggle) {
+                mobileDarkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            localStorage.setItem('darkMode', 'enabled');
+        }
+    }
+
+    function toggleSimpleMode() {
+        if (body.getAttribute('data-mode') === 'simple') {
+            body.removeAttribute('data-mode');
+            simpleModeToggle.innerHTML = '<i class="fas fa-eye"></i>';
+            if (mobileSimpleModeToggle) {
+                mobileSimpleModeToggle.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+            localStorage.setItem('simpleMode', 'disabled');
+        } else {
+            body.setAttribute('data-mode', 'simple');
+            simpleModeToggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            if (mobileSimpleModeToggle) {
+                mobileSimpleModeToggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            }
+            localStorage.setItem('simpleMode', 'enabled');
+        }
+    }
+
+    // Statistics counter animation
+    function animateStats() {
+        const statNumbers = document.querySelectorAll('.stat-number');
+        
+        statNumbers.forEach(stat => {
+            const target = +stat.getAttribute('data-target');
+            const increment = target / 100;
+            let current = 0;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                stat.textContent = Math.floor(current);
+                
+                if (current >= target) {
+                    stat.textContent = target;
+                    clearInterval(timer);
+                }
+            }, 20);
         });
-        mobileUserWelcome.appendChild(mobileLogoutBtn);
-    </script>
+    }
+
+    // Run the animation when the stats section comes into view
+    const statsSection = document.querySelector('.stats');
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            animateStats();
+            observer.unobserve(statsSection);
+        }
+    }, { threshold: 0.5 });
+
+    observer.observe(statsSection);
+
+    // Add logout buttons
+    const logoutBtn = document.createElement('button');
+    logoutBtn.textContent = 'Logout';
+    logoutBtn.classList.add('auth-btn', 'login');
+    logoutBtn.style.marginLeft = '10px';
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/logout');
+            if (response.ok) {
+                currentUser = null;
+                isAdmin = false;
+                updateUI();
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    });
+    userWelcome.appendChild(logoutBtn);
+
+    const mobileLogoutBtn = document.createElement('button');
+    mobileLogoutBtn.textContent = 'Logout';
+    mobileLogoutBtn.classList.add('auth-btn', 'login');
+    mobileLogoutBtn.style.marginLeft = '10px';
+    mobileLogoutBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/logout');
+            if (response.ok) {
+                currentUser = null;
+                isAdmin = false;
+                updateUI();
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    });
+    mobileUserWelcome.appendChild(mobileLogoutBtn);
+</script>
 </body>
 </html>
